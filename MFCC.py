@@ -101,7 +101,7 @@ def mel_filterbank(N,n_filters=13,Fs=12000,min_freq=0,max_freq = None, debug=Fal
     fbank *= enr_norm[:,np.newaxis] 
     return fbank
 
-def Extract_Feature_Vec(link, debug = False):
+def Extract_Feature_Vec(link, debug = False, method='m1'):
 
     # Get MFCC Vectors
         # window_length = 0.015 secs
@@ -129,7 +129,7 @@ def Extract_Feature_Vec(link, debug = False):
         # apply the filterbank on each windowed power sepctrum
         # multiply each filterbank spectrum with power spectrum 
     power_spec_sig = np.array([np.abs(DFT(s)/len(s))**2 for s in win_sig])
-    fbank = mel_filterbank(win_len,Fs=Fs,debug=debug)
+    fbank = mel_filterbank(win_len,Fs=Fs,debug=debug,method=method)
     mel_spectrogram = np.dot(fbank, power_spec_sig.T)
   
     # compute the MFCCs by logging the mel spectrogram and computing the DCT
@@ -218,7 +218,3 @@ if __name__ == '__main__':
     plt.imshow(p_fv,aspect='auto',origin='lower')
     plt.title('Mel Spectogram using Praat(parselmouth)')
     plt.show()
-   
-
-
-
