@@ -20,7 +20,7 @@ def DTW_distance(s,t,method='euclidean'):
     https://www.audiolabs-erlangen.de/resources/MIR/FMP/C3/C3S2_DTWbasic.html
     """
 
-    n, m = len(s),len(t)
+    n, m = s.shape[1],t.shape[1]
     DTW = np.zeros((n+1,m+1))
 
     # Initialize the cost matrix boundaries
@@ -32,7 +32,7 @@ def DTW_distance(s,t,method='euclidean'):
     for i in range(1,n+1):
         for j in range(1,m+1):
             cost = cost_fn(s[:,i-1],t[:,j-1])
-            DTW[i,j] = cost + min(DTW[i-1,j],DTW[i-1,j-i],DTW[i,j-1])
+            DTW[i,j] = cost + min(DTW[i-1,j],DTW[i-1,j-1],DTW[i,j-1])
     
     return DTW[n,m]/(n+m)
 
@@ -142,7 +142,7 @@ def DTW_template_alignment(m,ts):
     # average the Vectors across the templates
     temp = np.array(temp)
 
-    return np.mean(temp,axis=1)
+    return np.mean(temp,axis=0)
 
 if __name__ == "__main__":
     # c = DTW_distance([1, 3, 9, 2, 1],[2, 0, 0, 8, 7, 2])

@@ -124,9 +124,10 @@ def Extract_Feature_Vec(link, num_frames = 40,debug = False, method='m1', TS = F
     Fs, OG_sig = w.read(link)
 
     # signal Normalization (mean subtraction) and VAD
-    OG_sig = OG_sig - np.mean(OG_sig)
+    OG_sig  = OG_sig - np.mean(OG_sig)
     sig, E = VAD(OG_sig)
-
+    # sig = OG_sigs
+    
     # window the signal and interpolate it to a specific length
     win_len = int(Fs*0.015)
     win_jump = int(Fs*0.005)
@@ -142,6 +143,7 @@ def Extract_Feature_Vec(link, num_frames = 40,debug = False, method='m1', TS = F
     # Find energy of the signal
     E_sig = [i**2 for i in win_sig]
     E_sig = np.array(E_sig)
+    E_sig = E_sig - np.mean(E_sig)          # mean substraction
     dE_sig = delta(E_sig,2)
     ddE_sig = delta(dE_sig,1)
 
@@ -156,6 +158,7 @@ def Extract_Feature_Vec(link, num_frames = 40,debug = False, method='m1', TS = F
     # compute the MFCCs by logging the mel spectrogram and computing the DCT
     mfccs = [dct(np.log10(i),axis=0,norm='ortho') for i in mel_spectrogram]
     mfccs = np.array(mfccs)
+    mfccs = mfccs - np.mean(mfccs)          # Cepstral mean substraction
     # find delta MFCCs and delta delta mfccs
     dmfccs = delta(mfccs,2)
     ddmfccs = delta(dmfccs,1)
@@ -213,7 +216,7 @@ def MFCC_vecs_praat(path,debug=False):
 
 
 if __name__ == '__main__':
-    debug = False
+    debug = True
     sample_link = './Data/Isolated_Digits/2/dev/mk_2.wav'
     fv,VAD_sig, E = Extract_Feature_Vec(sample_link,debug=debug,TS=True)
     fs, sig = w.read(sample_link)
@@ -226,7 +229,7 @@ if __name__ == '__main__':
     ax[0,0].set_title('Mel filterbank')
 
     ax[0,1].imshow(fv,aspect='auto',origin='lower')
-    ax[0,1].set_title('Mel Spectrogram')
+    ax[0,1].set_title('MFCC Feature Vectors')
 
     for n in range(filters.shape[0]):
         ax[1,0].plot(filters[n])
@@ -236,7 +239,7 @@ if __name__ == '__main__':
     ax[1,1].set_title('Sample Signal')
 
     ax[2,0].imshow(p_fv,aspect='auto',origin='lower')
-    ax[2,0].set_title('Mel Spectogram using Praat(parselmouth)')
+    ax[2,0].set_title('MFCC Feature Vectors using Praat(parselmouth)')
 
     ax[2,1].plot(VAD_sig)
     ax[2,1].set_title('Sample Signal after VAD')
@@ -246,4 +249,4 @@ if __name__ == '__main__':
 
     ax[1,2].plot(np.square(sig))
     ax[1,2].set_title('Energy of the signal')
-    # plt.show()
+    plt.show()

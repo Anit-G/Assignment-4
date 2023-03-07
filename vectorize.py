@@ -1,4 +1,4 @@
-from MFCC import Extract_Feature_Vec
+from MFCC import Extract_Feature_Vec, MFCC_vecs_praat
 import numpy as np
 import os
 import pickle
@@ -7,6 +7,7 @@ log.basicConfig(filename="vec.log",filemode='w',format='%(levelname)s - %(messag
 
 def vectorize(path):
     fv,_,_ = Extract_Feature_Vec(path)
+    # fv = MFCC_vecs_praat(path)
     return fv
 
 def vectorize_files(file_pth):
@@ -34,6 +35,9 @@ if __name__ == "__main__":
                 "./Data/Isolated_Digits/5/dev","./Data/Isolated_Digits/5/train",
                 "./Data/Isolated_Digits/z/dev","./Data/Isolated_Digits/z/train",]
     data = vectorize_files(iso_pths)
+
+    if os.path.isfile('Text7_data.txt'):
+        os.remove('Team7_data.txt')
 
     # saving data as a pickle file
     file_handle = open('Team7_data.txt','wb')
