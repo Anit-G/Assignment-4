@@ -1,5 +1,6 @@
 from scipy.io import wavfile as w
 from scipy.fftpack import dct 
+from scipy.signal import resample,resample_poly
 import numpy as np
 from numpy.fft import rfft as DFT
 import matplotlib.pyplot as plt
@@ -101,23 +102,43 @@ def mel_filterbank(N,n_filters=13,Fs=12000,min_freq=0,max_freq = None, debug=Fal
     fbank *= enr_norm[:,np.newaxis] 
     return fbank
 
-def Extract_Feature_Vec(link, debug = False, method='m1'):
+def VAD(sig, thre = 1e4):
+    """
+    Perform energy based VAD
+    """
+    E = np.square(sig)
+    # thre = np.median(E)
+    E[E<=thre] = 0
+    E[E>thre] = 1
+
+    s_E = E.astype(bool)
+    return sig[s_E], E
+
+def Extract_Feature_Vec(link, num_frames = 40,debug = False, method='m1', TS = False):
 
     # Get MFCC Vectors
         # window_length = 0.015 secs
         # jump = 0.005 secs
     
     # load signal
-    Fs, sig = w.read(link)
-    N = len(sig)
+    Fs, OG_sig = w.read(link)
 
-    # window the signal
+    # signal Normalization (mean subtraction) and VAD
+    OG_sig = OG_sig - np.mean(OG_sig)
+    sig, E = VAD(OG_sig)
+
+    # window the signal and interpolate it to a specific length
     win_len = int(Fs*0.015)
     win_jump = int(Fs*0.005)
 
+    # resample the signal to 4300 samples to get exactly 40 frames
+    if TS:
+        sig = resample(sig,4300)
+
+    N = len(sig)
     win_sig = [sig[i:i+win_len] for i in range(0,N-win_len,win_jump)]
     num_wins = len(win_sig)
-    
+
     # Find energy of the signal
     E_sig = [i**2 for i in win_sig]
     E_sig = np.array(E_sig)
@@ -161,7 +182,7 @@ def Extract_Feature_Vec(link, debug = False, method='m1'):
         print(f'Energy: \n{E_sig.shape}\n{dE_sig.shape}\n{ddE_sig.shape}')
         print(f"MFCC Feature Vectors: {MFCCS_vector.shape}")
 
-    return MFCCS_vector
+    return MFCCS_vector, sig, E
 
 def MFCC_vecs_praat(path,debug=False):
     """
@@ -171,7 +192,7 @@ def MFCC_vecs_praat(path,debug=False):
         contains the discription of MFCC functionality of parselmouth using praat
     """
     sound = pm.Sound(path)
-
+    
     # Find MFCC
     mfcc_obj = sound.to_mfcc(number_of_coefficients=13)
     mfcc = mfcc_obj.to_array()
@@ -186,20 +207,21 @@ def MFCC_vecs_praat(path,debug=False):
     if debug:
         print(f"\n\nPraat MFCCs: {mfcc.shape}, {dmfcc.shape}, {ddmfcc.shape}")
         print(f"Final MFCC Vector Shape: {MFCC_vecs.shape}")
+        print(sound.as_array())
 
     return MFCC_vecs
 
 
 if __name__ == '__main__':
     debug = False
-    sample_link = './Data/Dev/Team-05/111a.wav'
-    fv = Extract_Feature_Vec(sample_link,debug=debug)
+    sample_link = './Data/Isolated_Digits/2/dev/mk_2.wav'
+    fv,VAD_sig, E = Extract_Feature_Vec(sample_link,debug=debug,TS=True)
     fs, sig = w.read(sample_link)
     p_fv = MFCC_vecs_praat(sample_link,debug=debug)
     filters = mel_filterbank(300,Fs=fs,debug=debug)
 
     # Data presentation:
-    fig,ax = plt.subplots(2,2,figsize=(15,15))
+    fig,ax = plt.subplots(3,3,figsize=(10,20))
     ax[0,0].imshow(filters,aspect='auto',origin='lower')
     ax[0,0].set_title('Mel filterbank')
 
@@ -213,8 +235,15 @@ if __name__ == '__main__':
     ax[1,1].plot(sig)
     ax[1,1].set_title('Sample Signal')
 
-    # Data Presentation for praat
-    plt.figure(figsize=(10,10))
-    plt.imshow(p_fv,aspect='auto',origin='lower')
-    plt.title('Mel Spectogram using Praat(parselmouth)')
-    plt.show()
+    ax[2,0].imshow(p_fv,aspect='auto',origin='lower')
+    ax[2,0].set_title('Mel Spectogram using Praat(parselmouth)')
+
+    ax[2,1].plot(VAD_sig)
+    ax[2,1].set_title('Sample Signal after VAD')
+
+    ax[0,2].plot(E)
+    ax[0,2].set_title('VAD Threshold')
+
+    ax[1,2].plot(np.square(sig))
+    ax[1,2].set_title('Energy of the signal')
+    # plt.show()

@@ -6,7 +6,7 @@ import logging as log
 log.basicConfig(filename="vec.log",filemode='w',format='%(levelname)s - %(message)s',level=log.DEBUG)
 
 def vectorize(path):
-    fv = Extract_Feature_Vec(path)
+    fv,_,_ = Extract_Feature_Vec(path)
     return fv
 
 def vectorize_files(file_pth):
@@ -33,7 +33,7 @@ if __name__ == "__main__":
                 "./Data/Isolated_Digits/4/dev","./Data/Isolated_Digits/4/train",
                 "./Data/Isolated_Digits/5/dev","./Data/Isolated_Digits/5/train",
                 "./Data/Isolated_Digits/z/dev","./Data/Isolated_Digits/z/train",]
-    data = vectorize_files(Dev_pth+iso_pths)
+    data = vectorize_files(iso_pths)
 
     # saving data as a pickle file
     file_handle = open('Team7_data.txt','wb')
